@@ -18,22 +18,28 @@ namespace PDFUpload.Controllers
         public IActionResult Index()
         {
             Console.WriteLine("From Index");
+            System.Diagnostics.Debug.WriteLine("Index");
             return View();
         }
 
         [HttpPost]
         public async Task<IActionResult> Index(IFormFile uploadedFile)
         {
+            ViewData.Clear();
             //To Create directory if directory is not found
             if (!Directory.Exists(wwwrootDirectory))
             {
                 Directory.CreateDirectory(wwwrootDirectory);
             }
 
-            if ((Path.GetExtension(uploadedFile.FileName) == ".pdf"))
+            if (uploadedFile != null)
             {
-                if (uploadedFile != null)
+                //To check the file extention
+                if (Path.GetExtension(uploadedFile.FileName) == ".pdf")
                 {
+                    // to get msg in console for validating file type
+                    System.Diagnostics.Debug.WriteLine("File extention is " + (Path.GetExtension(uploadedFile.FileName)==".pdf"));
+
                     string s = checkFileType(uploadedFile);
                     var path = Path.Combine(
                         wwwrootDirectory,
@@ -46,23 +52,31 @@ namespace PDFUpload.Controllers
                         await uploadedFile.CopyToAsync(stream);
                     }
 
-
-
                     ViewBag.Message = uploadedFile.FileName + " Uploded " + s;
-                    //return View();
+
+
+                    //return console
+                    System.Diagnostics.Debug.WriteLine("Uploded");
+                }
+                else
+                {
+                    ViewBag.Message = "allowed only pdf but given file is " + Path.GetExtension(uploadedFile.FileName);
+                    // To get console message
+                    System.Diagnostics.Debug.WriteLine("Uploaded file is " + Path.GetExtension(uploadedFile.FileName) + " Not Allowed");
                 }
             }
-            else
-            {
-                ViewBag.Message = "Allowed only PDF but given file is "+ Path.GetExtension(uploadedFile.FileName);
-            }
+
+
             if (uploadedFile == null)
             {
                 ViewBag.Message = "Choose File to upload";
+                // to get msg in console
+                System.Diagnostics.Debug.WriteLine("File need to upload");
             }
-            return View("Index");
+            return View("Views/Home/Index.cshtml");
         }
 
+        // returns file content type
         private string checkFileType(IFormFile FileName)
         {
             string contentType;

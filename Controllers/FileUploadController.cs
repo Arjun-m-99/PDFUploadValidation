@@ -7,6 +7,8 @@ using System.IO;
 using Microsoft.AspNetCore.Http;
 using System.Text;
 using Microsoft.AspNetCore.StaticFiles;
+using iTextSharp.text.pdf;
+using System.Text.RegularExpressions;
 
 namespace PDFUpload.Controllers
 {
@@ -31,38 +33,80 @@ namespace PDFUpload.Controllers
             {
                 Directory.CreateDirectory(wwwrootDirectory);
             }
+            
+
 
             if (uploadedFile != null)
             {
-                //To check the file extention
-                if (Path.GetExtension(uploadedFile.FileName) == ".pdf")
+                var checkThisPath = wwwrootDirectory + "/" + uploadedFile.FileName;
+                FileInfo file = new FileInfo(checkThisPath);
+                System.Diagnostics.Debug.WriteLine("Check File Existes: " + file.Exists);
+
+                if (!file.Exists)
                 {
-                    // to get msg in console for validating file type
-                    System.Diagnostics.Debug.WriteLine("File extention is " + (Path.GetExtension(uploadedFile.FileName)==".pdf"));
-
-                    string s = checkFileType(uploadedFile);
-                    var path = Path.Combine(
-                        wwwrootDirectory,
-                        //uploadedFile.FileName + Path.GetExtension(uploadedFile.FileName) // Save file name+extention
-                        uploadedFile.FileName //Save only file name
-                        );
-
-                    using (var stream = new FileStream(path, FileMode.Create))
+                    //To check the file extention
+                    if (Path.GetExtension(uploadedFile.FileName) == ".pdf")
                     {
-                        await uploadedFile.CopyToAsync(stream);
+
+                        // to get msg in console for validating file type
+                        System.Diagnostics.Debug.WriteLine("File extention is " + (Path.GetExtension(uploadedFile.FileName) == ".pdf"));
+
+                        string s = checkFileType(uploadedFile);
+                        var path = Path.Combine(
+                            wwwrootDirectory,
+                            //uploadedFile.FileName + Path.GetExtension(uploadedFile.FileName) // Save file name+extention
+                            uploadedFile.FileName //Save only file name
+                            );
+
+                        using (var stream = new FileStream(path, FileMode.Create))
+                        {
+                            await uploadedFile.CopyToAsync(stream);
+                        }
+
+                        //using (StreamReader sr = new StreamReader(File.OpenRead(uploadedFile)))
+                        //{
+                        //    Regex regex = new Regex(@"/Type\s*/Page[^s]");
+                        //    MatchCollection matches = regex.Matches(sr.ReadToEnd());
+
+                        //    //return matches.Count + "";
+                        //}
+
+
+
+                        ViewBag.Message = uploadedFile.FileName + " Uploded " + s;
+
+
+                        //return console
+                        System.Diagnostics.Debug.WriteLine("Uploded");
+
+                        try
+                        {
+                            checkPages(uploadedFile);
+                        }
+                        catch (Exception e)
+                        {
+                            System.Diagnostics.Debug.WriteLine(e);
+                            System.Diagnostics.Debug.WriteLine("Not a Valid PDF");
+                            string checkError = e + "";
+                            if (checkError.Contains("InvalidPdfException"))
+                            {
+                                ViewBag.Message = "Not A valid PDF. Try Valid PDF";
+                                file.Delete();
+
+                            }
+                        }
                     }
-
-                    ViewBag.Message = uploadedFile.FileName + " Uploded " + s;
-
-
-                    //return console
-                    System.Diagnostics.Debug.WriteLine("Uploded");
+                    else
+                    {
+                        ViewBag.Message = "allowed only pdf but given file is " + Path.GetExtension(uploadedFile.FileName);
+                        // To get console message
+                        System.Diagnostics.Debug.WriteLine("Uploaded file is " + Path.GetExtension(uploadedFile.FileName) + " Not Allowed");
+                    }
                 }
                 else
                 {
-                    ViewBag.Message = "allowed only pdf but given file is " + Path.GetExtension(uploadedFile.FileName);
-                    // To get console message
-                    System.Diagnostics.Debug.WriteLine("Uploaded file is " + Path.GetExtension(uploadedFile.FileName) + " Not Allowed");
+                    ViewBag.Message = "File alredy Exists. Try another one.";
+                    System.Diagnostics.Debug.WriteLine("File already Present");
                 }
             }
 
@@ -76,12 +120,23 @@ namespace PDFUpload.Controllers
             return View("Views/Home/Index.cshtml");
         }
 
+        private void checkPages(IFormFile uploadedFile)
+        {
+
+            string pdfPath = wwwrootDirectory + "/" + uploadedFile.FileName;
+            PdfReader pdfReader = new PdfReader(pdfPath);
+            int numberOfPages = pdfReader.NumberOfPages;
+            System.Diagnostics.Debug.WriteLine(numberOfPages);
+
+        }
+
         // returns file content type
         private string checkFileType(IFormFile FileName)
         {
             string contentType;
             new FileExtensionContentTypeProvider().TryGetContentType(FileName.FileName, out contentType);
             // return contentType ?? "application/octet-stream";
+
             return contentType;
         }
     }

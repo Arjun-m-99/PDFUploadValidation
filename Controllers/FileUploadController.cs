@@ -17,12 +17,12 @@ namespace PDFUpload.Controllers
         private readonly string wwwrootDirectory =
             Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/UploadedPdfs");
 
-        public IActionResult Index()
-        {
-            Console.WriteLine("From Index");
-            System.Diagnostics.Debug.WriteLine("Index");
-            return View();
-        }
+        //public IActionResult Index()
+        //{
+        //    Console.WriteLine("From Index");
+        //    System.Diagnostics.Debug.WriteLine("Index");
+        //    return View();
+        //}
 
         [HttpPost]
         public async Task<IActionResult> Index(IFormFile uploadedFile)
@@ -33,10 +33,14 @@ namespace PDFUpload.Controllers
             {
                 Directory.CreateDirectory(wwwrootDirectory);
             }
-            
 
-
-            if (uploadedFile != null)
+            if (uploadedFile == null)
+            {
+                ViewBag.Message = "Choose File to upload";
+                // to get msg in console
+                System.Diagnostics.Debug.WriteLine("File need to upload");
+            }
+            else
             {
                 var checkThisPath = wwwrootDirectory + "/" + uploadedFile.FileName;
                 FileInfo file = new FileInfo(checkThisPath);
@@ -48,9 +52,10 @@ namespace PDFUpload.Controllers
                     if (Path.GetExtension(uploadedFile.FileName) == ".pdf")
                     {
 
-                        // to get msg in console for validating file type
+                        // To get msg in console for validating file type
                         System.Diagnostics.Debug.WriteLine("File extention is " + (Path.GetExtension(uploadedFile.FileName) == ".pdf"));
 
+                        //To check file type (Just for ref)
                         string s = checkFileType(uploadedFile);
                         var path = Path.Combine(
                             wwwrootDirectory,
@@ -63,22 +68,11 @@ namespace PDFUpload.Controllers
                             await uploadedFile.CopyToAsync(stream);
                         }
 
-                        //using (StreamReader sr = new StreamReader(File.OpenRead(uploadedFile)))
-                        //{
-                        //    Regex regex = new Regex(@"/Type\s*/Page[^s]");
-                        //    MatchCollection matches = regex.Matches(sr.ReadToEnd());
-
-                        //    //return matches.Count + "";
-                        //}
-
-
-
-                        ViewBag.Message = uploadedFile.FileName + " Uploded " + s;
-
+                        ViewBag.Message = uploadedFile.FileName + " Uploaded " + s;
 
                         //return console
-                        System.Diagnostics.Debug.WriteLine("Uploded");
-
+                        System.Diagnostics.Debug.WriteLine("Uploaded");
+                        //TO valid PDF
                         try
                         {
                             checkPages(uploadedFile);
@@ -110,16 +104,10 @@ namespace PDFUpload.Controllers
                 }
             }
 
-
-            if (uploadedFile == null)
-            {
-                ViewBag.Message = "Choose File to upload";
-                // to get msg in console
-                System.Diagnostics.Debug.WriteLine("File need to upload");
-            }
             return View("Views/Home/Index.cshtml");
         }
 
+        //To verify the uploaded file is pdf or not by readinng the pages
         private void checkPages(IFormFile uploadedFile)
         {
 
@@ -136,7 +124,6 @@ namespace PDFUpload.Controllers
             string contentType;
             new FileExtensionContentTypeProvider().TryGetContentType(FileName.FileName, out contentType);
             // return contentType ?? "application/octet-stream";
-
             return contentType;
         }
     }

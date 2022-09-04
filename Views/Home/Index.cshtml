@@ -2,6 +2,10 @@
     ViewData["Title"] = "Home Page";
 }
 
+<head>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
@@ -10,14 +14,31 @@
         {
             <div>
                 <div class="form-group">
-                    <input type="file" class="form-control" name="uploadedFile" accept="application/pdf,application/vnd.ms-excel" />
+                    <input type="file" class="input-group-text" name="uploadedFile" onchange="" accept="application/pdf,application/vnd.ms-excel" />
                 </div>
                 <div class="form-group">
                     <input type="submit" name="fileUpload" value="Upload" />
-                    @ViewBag.Message
+                    @*@ViewBag.Message*@
+                    <span class="styleCalss" id="v"></span>
                 </div>
             </div>
 
         }
     </div>
 </div>
+
+@section scripts{
+    <script type="text/javascript">
+        //alert("@ViewBag.Message");
+        var v = "@ViewBag.Message";
+        document.getElementById("v").innerHTML = v;
+
+        if (v.includes("Uploaded")) {
+            document.getElementById("v").className = "success";
+        } else {
+            document.getElementById("v").className = "danger";
+        }
+
+
+    </script>
+}
